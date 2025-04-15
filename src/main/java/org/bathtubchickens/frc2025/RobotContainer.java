@@ -6,8 +6,13 @@ package org.bathtubchickens.frc2025;
 
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
+import org.bathtubchickens.frc2025.subsystems.drive.Drive;
+import org.bathtubchickens.frc2025.subsystems.vision.Vision;
 
 public class RobotContainer {
+
+  private Drive drive;
+  private Vision vision;
 
   public RobotContainer() {
     configureBindings();
