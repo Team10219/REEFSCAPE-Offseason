@@ -19,17 +19,17 @@ public class DriverControlsXbox implements DriverControls {
 
     @Override
     public double getForward() {
-        return driver.getLeftY();
+        return -driver.getLeftY();
     }
 
     @Override
     public double getStrafe() {
-        return driver.getLeftX();
+        return -driver.getLeftX();
     }
 
     @Override
     public double getTurn() {
-        return driver.getRightX();
+        return -driver.getRightX();
     }
 
     @Override
