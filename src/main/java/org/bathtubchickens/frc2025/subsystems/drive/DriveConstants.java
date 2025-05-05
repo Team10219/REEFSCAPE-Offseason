@@ -106,10 +106,7 @@ public class DriveConstants {
       new TalonFXConfiguration()
           .withCurrentLimits(
               new CurrentLimitsConfigs()
-                  // Swerve azimuth does not require much torque output, so we can set a relatively
-                  // low
-                  // stator current limit to help avoid brownouts without impacting performance.
-                  .withStatorCurrentLimit(Amps.of(60))
+                  .withStatorCurrentLimit(Amps.of(60)) // Could be useful to change to 50A
                   .withStatorCurrentLimitEnable(true));
   private static final CANcoderConfiguration encoderInitialConfigs = new CANcoderConfiguration();
   // Configs for the Pigeon 2; leave this null to skip applying Pigeon 2 configs
@@ -119,8 +116,7 @@ public class DriveConstants {
   // All swerve devices must share the same CAN bus
   public static final CANBus kCANBus = new CANBus("Tim", "./logs/example.hoot");
 
-  // Theoretical free speed (m/s) at 12 V applied output;   
-  // This needs to be tuned to your individual robot
+  // Theoretical free speed (f/s) at 12 V applied output;   
   private static final LoggedTunableNumber fps =
       new LoggedTunableNumber("TunerConstants/kSpeedAt12Volts", 1.5);
   public static final LinearVelocity kSpeedAt12Volts = FeetPerSecond.of(fps.getAsDouble());

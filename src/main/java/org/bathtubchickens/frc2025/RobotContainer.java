@@ -22,6 +22,9 @@ import org.bathtubchickens.frc2025.subsystems.drive.ModuleIOTalonFX;
 import org.bathtubchickens.frc2025.subsystems.drive.gyro.GyroIO;
 import org.bathtubchickens.frc2025.subsystems.drive.gyro.GyroIOPigeon2;
 import org.bathtubchickens.frc2025.subsystems.vision.Vision;
+import org.bathtubchickens.frc2025.subsystems.vision.VisionConstants;
+import org.bathtubchickens.frc2025.subsystems.vision.VisionIOLimelight;
+import org.bathtubchickens.frc2025.subsystems.vision.VisionIOPhotonVisionSim;
 
 public class RobotContainer {
 
@@ -32,33 +35,40 @@ public class RobotContainer {
   private OperatorControls operatorControls;
 
   public RobotContainer() {
-    switch (Constants.getMode()) {
+   switch (Constants.getMode()) {
       case REAL:
-        drive = 
-          new Drive(
-            new GyroIOPigeon2(),
-            new ModuleIOTalonFX(DriveConstants.FrontLeft), 
-            new ModuleIOTalonFX(DriveConstants.FrontRight), 
-            new ModuleIOTalonFX(DriveConstants.FrontRight), 
-            new ModuleIOTalonFX(DriveConstants.FrontRight));
-        break;
-      case SIM:
+
+        // Real robot, instantiate hardware IO implementations
         drive =
-          new Drive(
-            new GyroIO() {}, 
-            new ModuleIOSim(DriveConstants.FrontLeft), 
-            new ModuleIOSim(DriveConstants.FrontRight), 
-            new ModuleIOSim(DriveConstants.BackLeft), 
-            new ModuleIOSim(DriveConstants.BackRight));
+            new Drive(
+                new GyroIOPigeon2(),
+                new ModuleIOTalonFX(DriveConstants.FrontLeft),
+                new ModuleIOTalonFX(DriveConstants.FrontRight),
+                new ModuleIOTalonFX(DriveConstants.BackLeft),
+                new ModuleIOTalonFX(DriveConstants.BackRight));
         break;
+
+      case SIM:
+        // Sim robot, instantiate physics sim IO implementations
+        drive =
+            new Drive(
+                new GyroIO() {},
+                new ModuleIOSim(DriveConstants.FrontLeft),
+                new ModuleIOSim(DriveConstants.FrontRight),
+                new ModuleIOSim(DriveConstants.BackLeft),
+                new ModuleIOSim(DriveConstants.BackRight));
+        break;
+
       default:
-        drive = 
-          new Drive(
-            new GyroIO() {}, 
-            new ModuleIO() {}, 
-            new ModuleIO() {}, 
-            new ModuleIO() {}, 
-            new ModuleIO() {});
+        // Replayed robot, disable IO implementations
+        drive =
+            new Drive(
+                new GyroIO() {},
+                new ModuleIO() {},
+                new ModuleIO() {},
+                new ModuleIO() {},
+                new ModuleIO() {});
+        break;
     }
     configureControllers();
     configureBindings();

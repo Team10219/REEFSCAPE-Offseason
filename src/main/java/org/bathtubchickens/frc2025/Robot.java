@@ -107,6 +107,10 @@ public class Robot extends LoggedRobot {
         break;
     }
 
+    Logger.start();
+
+    Logger.recordMetadata("TuningMode", Boolean.toString(Constants.tuningMode));
+
     SignalLogger.enableAutoLogging(false);
 
     try {
