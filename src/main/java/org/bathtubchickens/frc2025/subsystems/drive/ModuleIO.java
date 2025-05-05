@@ -13,45 +13,43 @@
 
 package org.bathtubchickens.frc2025.subsystems.drive;
 
+import edu.wpi.first.math.geometry.Rotation2d;
 import org.littletonrobotics.junction.AutoLog;
 
-import edu.wpi.first.math.geometry.Rotation2d;
-
-@AutoLog
 public interface ModuleIO {
-    class ModuleIOInputs {
-        public ModuleIOData data =
-            new ModuleIOData(false, 0.0, 0.0, 0.0, 0.0, false, false, new Rotation2d(), new Rotation2d(), 0.0, 0.0, 0.0, new double[] {}, new double[] {}, new Rotation2d[] {});
+  @AutoLog 
+  public static class ModuleIOInputs {
+    public boolean driveConnected = false;
+    public double drivePositionRad = 0.0;
+    public double driveVelocityRadPerSec = 0.0;
+    public double driveAppliedVolts = 0.0;
+    public double driveCurrentAmps = 0.0;
 
-    }
+    public boolean turnConnected = false;
+    public boolean turnEncoderConnected = false;
+    public Rotation2d turnAbsolutePosition = new Rotation2d();
+    public Rotation2d turnPosition = new Rotation2d();
+    public double turnVelocityRadPerSec = 0.0;
+    public double turnAppliedVolts = 0.0;
+    public double turnCurrentAmps = 0.0;
 
-    record ModuleIOData(
-        boolean driveConnected,
-        double drivePositionRad,
-        double driveVelocityRadPerSec,
-        double driveAppliedVolts,
-        double driveCurrentAmps,
+    public double[] odometryTimestamps = new double[] {};
+    public double[] odometryDrivePositionsRad = new double[] {};
+    public Rotation2d[] odometryTurnPositions = new Rotation2d[] {};
+  }
 
-        boolean turnConnected,
-        boolean turnEncoderConnected,
-        Rotation2d turnAbsolutePosition,
-        Rotation2d turnPosition,
-        double turnVelocityRadPerSec,
-        double turnAppliedVolts,
-        double turnCurrentAmps,
+  /** Updates the set of loggable inputs. */
+  public default void updateInputs(ModuleIOInputs inputs) {}
 
-        double[] odometryTimestamps,
-        double[] odometryDrivePositionsRad,
-        Rotation2d[] odometryTurnPositions
-    ) {}
+  /** Run the drive motor at the specified open loop value. */
+  public default void setDriveOpenLoop(double output) {}
 
-    default void updateInputs(ModuleIOInputs inputs) {}
+  /** Run the turn motor at the specified open loop value. */
+  public default void setTurnOpenLoop(double output) {}
 
-    default void setDriveOpenLoop(double output) {}
+  /** Run the drive motor at the specified velocity. */
+  public default void setDriveVelocity(double velocityRadPerSec) {}
 
-    default void setTurnOpenLoop(double output) {}
-
-    default void setDriveVelocity(double velocityRadPerSec) {}
-
-    default void setTurnPosition(Rotation2d rotation) {}
+  /** Run the turn motor to the specified rotation. */
+  public default void setTurnPosition(Rotation2d rotation) {}
 }

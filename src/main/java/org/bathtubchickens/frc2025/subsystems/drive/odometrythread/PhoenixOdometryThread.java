@@ -13,6 +13,12 @@
 
 package org.bathtubchickens.frc2025.subsystems.drive.odometrythread;
 
+import com.ctre.phoenix6.BaseStatusSignal;
+import com.ctre.phoenix6.CANBus;
+import com.ctre.phoenix6.StatusSignal;
+import edu.wpi.first.units.measure.Angle;
+import edu.wpi.first.wpilibj.RobotController;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Queue;
@@ -24,45 +30,66 @@ import java.util.function.DoubleSupplier;
 import org.bathtubchickens.frc2025.subsystems.drive.Drive;
 import org.bathtubchickens.frc2025.subsystems.drive.DriveConstants;
 
-import com.ctre.phoenix6.BaseStatusSignal;
-import com.ctre.phoenix6.CANBus;
+/**
+ * Provides an interface for asynchronously reading high-frequency measurements to a set of queues.
+ *
+ * <p>This version is intended for Phoenix 6 devices on both the RIO and CANivore buses. When using
+ * a CANivore, the thread uses the "waitForAll" blocking method to enable more consistent sampling.
+ * This also allows Phoenix Pro users to benefit from lower latency between devices using CANivore
+ * time synchronization.
+ */
+public class PhoenixOdometryThread extends Thread {
+  private final Lock signalsLock =
+      new ReentrantLock(); // Prevents conflicts when registering signals
+  private BaseStatusSignal[] phoenixSignals = new BaseStatusSignal[0];
+  private final List<DoubleSupplier> genericSignals = new ArrayList<>();
+  private final List<Queue<Double>> phoenixQueues = new ArrayList<>();
+  private final List<Queue<Double>> genericQueues = new ArrayList<>();
+  private final List<Queue<Double>> timestampQueues = new ArrayList<>();
 
-import edu.wpi.first.wpilibj.RobotController;
+  private static boolean isCANFD =
+      new CANBus(DriveConstants.DrivetrainConstants.CANBusName).isNetworkFD();
+  private static PhoenixOdometryThread instance = null;
 
-/** Add your docs here. */
-public class PheonixOdometryThread extends Thread {
-    private final Lock signalsLock =
-        new ReentrantLock();
-    private BaseStatusSignal[] pheonixSignals = new BaseStatusSignal[0];
-    private final List<DoubleSupplier> genericSignals = new ArrayList<>();
-    private final List<Queue<Double>> pheonixQueues = new ArrayList<>();
-    private final List<Queue<Double>> genericQueues = new ArrayList<>();
-    private final List<Queue<Double>> timestampQueues = new ArrayList<>();
-
-    private static boolean isCANFD = 
-        new CANBus(DriveConstants.DrivetrainConstants.CANBusName).isNetworkFD();
-    private static PheonixOdometryThread instance = null;
-
-    public static PheonixOdometryThread getInstance() {
-        if (instance == null) {
-            instance = new PheonixOdometryThread();
-        }
-        return instance;
+  public static PhoenixOdometryThread getInstance() {
+    if (instance == null) {
+      instance = new PhoenixOdometryThread();
     }
+    return instance;
+  }
 
-    private PheonixOdometryThread() {
-        setName("PheonixOdometryThread");
-        setDaemon(true);
+  private PhoenixOdometryThread() {
+    setName("PhoenixOdometryThread");
+    setDaemon(true);
+  }
+
+  @Override
+  public void start() {
+    if (timestampQueues.size() > 0) {
+      super.start();
     }
+  }
 
-    @Override
-    public void start() {
-        if (timestampQueues.size() > 0) {
-            super.start();
-        }
+  /** Registers a Phoenix signal to be read from the thread. */
+  public Queue<Double> registerSignal(StatusSignal<Angle> signal) {
+    Queue<Double> queue = new ArrayBlockingQueue<>(20);
+    signalsLock.lock();
+    Drive.odometryLock.lock();
+    try {
+      BaseStatusSignal[] newSignals = new BaseStatusSignal[phoenixSignals.length + 1];
+      System.arraycopy(phoenixSignals, 0, newSignals, 0, phoenixSignals.length);
+      newSignals[phoenixSignals.length] = signal;
+      phoenixSignals = newSignals;
+      phoenixQueues.add(queue);
+    } finally {
+      signalsLock.unlock();
+      Drive.odometryLock.unlock();
     }
+    return queue;
+  }
 
-    public Queue<Double> registerSignal(DoubleSupplier signal) {
+  /** Registers a generic signal to be read from the thread. */
+  public Queue<Double> registerSignal(DoubleSupplier signal) {
     Queue<Double> queue = new ArrayBlockingQueue<>(20);
     signalsLock.lock();
     Drive.odometryLock.lock();
@@ -95,12 +122,12 @@ public class PheonixOdometryThread extends Thread {
       signalsLock.lock();
       try {
         if (isCANFD && phoenixSignals.length > 0) {
-          BaseStatusSignal.waitForAll(2.0 / Drive.ODOMETRY_FREQUENCY, phoenixSignals);
+          BaseStatusSignal.waitForAll(2.0 / DriveConstants.ODOMETRY_FREQUENCY, phoenixSignals);
         } else {
           // "waitForAll" does not support blocking on multiple signals with a bus
           // that is not CAN FD, regardless of Pro licensing. No reasoning for this
           // behavior is provided by the documentation.
-          Thread.sleep((long) (1000.0 / Drive.ODOMETRY_FREQUENCY));
+          Thread.sleep((long) (1000.0 / DriveConstants.ODOMETRY_FREQUENCY));
           if (phoenixSignals.length > 0) BaseStatusSignal.refreshAll(phoenixSignals);
         }
       } catch (InterruptedException e) {
